@@ -1,6 +1,6 @@
 # nibabel is the required library for nifti files.
 import logging
-import os.path
+import os
 import sys
 
 logging.basicConfig(format="[%(funcName)s] %(message)s", stream=sys.stdout, level=logging.DEBUG)
@@ -55,7 +55,7 @@ def get_segmentation_output_path(i_max, i_min, nifti_path):
     :param nifti_path:
     :return:
     """
-    nifti_filename = os.path.basename(nifti_path)
+    nifti_filename = os.path.basename(nifti_path).split('.')[0]
     output_path = f'out/{nifti_filename}_seg_{i_min}_{i_max}.nii.gz'
     return output_path
 
