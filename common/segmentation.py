@@ -19,6 +19,13 @@ SHOW_LEVEL = 3
 def segment_by_threshold(img_data,
                          i_min,
                          i_max):
+    """
+    keep only values within i_min, i_max
+    :param img_data: nparray
+    :param i_min: int
+    :param i_max: int
+    :return: thershed image
+    """
     logging.info(f"performing segmentation based on threshold [{i_min},{i_max}]...")
     segmentation_mask = np.zeros_like(img_data)
     within_threshold = np.logical_and(i_min < img_data, img_data < i_max)
@@ -31,6 +38,15 @@ def find_optimal_imin_and_segmentation(img_data,
                                        i_max,
                                        connectivity,
                                        thresholds_plotter: ThresholdsPlotter = None):
+    """
+    find the best i_min to segment this image and return both
+    :param img_data: nparray
+    :param i_min_range: range
+    :param i_max: int
+    :param connectivity: int
+    :param thresholds_plotter: ThresholdPlotter
+    :return: best_i_min, best_segmentation_mask
+    """
     min_components_num = np.infty
     best_i_min = -1
     best_segmentation_mask = None
@@ -50,6 +66,12 @@ def find_optimal_imin_and_segmentation(img_data,
 
 
 def remove_all_but_largest_object_and_background(segmentation_mask, connectivity):
+    """
+    function name is self explenatory...
+    :param segmentation_mask: nparray
+    :param connectivity: int
+    :return: segmentation mask with only 1 connected component and no holes
+    """
     logging.info("post-processing segmentation data...")
     logging.info("removing all objects except the largest...")
     segmentation_mask = remove_all_objects_but_largest(segmentation_mask, connectivity)
@@ -62,6 +84,12 @@ def remove_all_but_largest_object_and_background(segmentation_mask, connectivity
 
 
 def remove_all_objects_but_largest(segmentation_mask, connectivity):
+    """
+    function name is self explenatory...
+    :param segmentation_mask: nparray
+    :param connectivity: int
+    :return: segmentation mask with only 1 connected
+    """
     labels, num = label(segmentation_mask, connectivity=connectivity, return_num=True)
     logging.info(f"found {num} connected-components in the segmentation...")
     components_sizes = sorted([component["area"] for component in skimage.measure.regionprops(labels)],
@@ -75,10 +103,24 @@ def remove_all_objects_but_largest(segmentation_mask, connectivity):
 
 
 def remove_all_holes_but_background(segmentation_mask, connectivity):
+    """
+    function name is self explenatory...
+    :param segmentation_mask: nparray
+    :param connectivity: int
+    :return: segmentation mask with no holes
+    """
     return np.invert(remove_all_objects_but_largest(np.invert(segmentation_mask), connectivity))
 
 
 def connected_components(gray_image, sigma=3.0, t=0.5, connectivity=2):
+    """
+    return a list of labeled connected components after thresholding the image
+    :param gray_image: nparray
+    :param sigma: used to threshold
+    :param t: no idea what that is
+    :param connectivity: int
+    :return: labeled_image, count
+    """
     # denoise the image with a Gaussian filter
     blurred_image = skimage.filters.gaussian(gray_image, sigma=sigma)
     # mask the image according to threshold
@@ -89,6 +131,11 @@ def connected_components(gray_image, sigma=3.0, t=0.5, connectivity=2):
 
 
 def get_first_and_last_nonzero_layers(img_data):
+    """
+    tell me which layers contain any data (assuming all in between is valid)
+    :param img_data: nparray
+    :return: (first, last)
+    """
     logging.info(f"finding ROI for image of shape {img_data.shape}...")
 
     # Find the first non-zero frame in the z-axis
@@ -104,6 +151,12 @@ def get_first_and_last_nonzero_layers(img_data):
 
 
 def get_key_layer_and_aorta_point_from_ct_and_l1(ct, l1):
+    """
+    that one is tricky
+    :param ct: nparray
+    :param l1: nparray
+    :return: sleep depraved
+    """
     # Find the largest slice of the L1 segmentation
     key_layer = find_largest_slice_layer(l1)
 
@@ -135,6 +188,11 @@ def get_key_layer_and_aorta_point_from_ct_and_l1(ct, l1):
 
 
 def find_largest_slice_layer(segmentation):
+    """
+    find index of layer where the slice area is largest
+    :param segmentation: nparray
+    :return: index of layer where the slice area is largest
+    """
     # Calculate the area of each layer in the mask
     slice_areas = np.sum(segmentation, axis=(0, 1))
 
@@ -147,13 +205,18 @@ def find_largest_slice_layer(segmentation):
 
 
 def get_bounding_points(key_l1):
+    """
+    get 4 points around l1
+    :param key_l1: nparray
+    :return: 4 points
+    """
     points = np.transpose(np.where(key_l1))
-    bounding_points = minimum_bounding_rectangle(points)
+    bounding_points = maximum_bounding_rectangle(points)
     bounding_points = [(int(p[1]), int(p[0])) for p in bounding_points]
     return bounding_points
 
 
-def minimum_bounding_rectangle(points):
+def maximum_bounding_rectangle(points):
     """
     Find the smallest bounding rectangle for a set of points.
     Returns a set of points representing the corners of the bounding box.
@@ -221,6 +284,13 @@ def minimum_bounding_rectangle(points):
 
 
 def plot_largest_bounding_box(bounding_points, key_ct, key_l1):
+    """
+    just for funz
+    :param bounding_points: lst of tpls
+    :param key_ct: nparray
+    :param key_l1: nparray
+    :return: None, just prints
+    """
     polygon = Polygon(bounding_points, closed=True, facecolor="none", edgecolor="r", linewidth=1)
     # Create a figure and axes object
     fig, ax = plt.subplots()
@@ -243,6 +313,14 @@ def plot_largest_bounding_box(bounding_points, key_ct, key_l1):
 
 
 def create_aorta_mask_return_center(ct, layer, estimated_aorta_center, show_level=1):
+    """
+
+    :param ct:
+    :param layer:
+    :param estimated_aorta_center:
+    :param show_level:
+    :return:
+    """
     print(f"create_aorta_mask_return_center(ct, layer={layer}, estimated_aorta_center={estimated_aorta_center})")
     # Extract ct layer
     ct_layer = ct[:, :, layer]
@@ -278,6 +356,13 @@ def create_aorta_mask_return_center(ct, layer, estimated_aorta_center, show_leve
 
 
 def create_circular_mask(shape, center, radius):
+    """
+    enough is enough
+    :param shape: I
+    :param center: Want
+    :param radius: To
+    :return: Sleep
+    """
     h = shape[0]
     w = shape[1]
     Y, X = np.ogrid[:h, :w]
@@ -288,6 +373,15 @@ def create_circular_mask(shape, center, radius):
 
 
 def get_circle_around_aorta(slice_mask, estimated_center, rad_min=10, rad_max=20, rad_step=1, show_level=1):
+    """
+    :param slice_mask: nparray
+    :param estimated_center: (x,y)
+    :param rad_min: int
+    :param rad_max: ont
+    :param rad_step: ant
+    :param show_level: unt
+    :return: x,y,r
+    """
     # Use the Canny edge detector to find edges in the image
     edges = canny(slice_mask, sigma=2)
 
@@ -306,6 +400,13 @@ def get_circle_around_aorta(slice_mask, estimated_center, rad_min=10, rad_max=20
 
 
 def find_circle_closest_to_point(point, hough_res, hough_radii):
+    """
+    Name os self explanatory
+    :param point: (x,y)
+    :param hough_res: look up the docs
+    :param hough_radii: likewise
+    :return: x,y,r
+    """
     # Select the most prominent circles
     accums, cx, cy, radii = hough_circle_peaks(hough_res, hough_radii,
                                                total_num_peaks=3)
@@ -318,6 +419,15 @@ def find_circle_closest_to_point(point, hough_res, hough_radii):
 
 
 def plot_circle_around_aorta(slice_mask, x, y, radius, show_level=1):
+    """
+    Plot a circle with given params over the given slice of the image
+    :param slice_mask: nparray
+    :param x: int
+    :param y: int
+    :param radius: int
+    :param show_level: secret
+    :return: None, just plots
+    """
     if (show_level >= SHOW_LEVEL):
         # Use imshow() to display the image with the detected circle
         plt.imshow(slice_mask, cmap="gray_r")
@@ -332,6 +442,12 @@ def plot_circle_around_aorta(slice_mask, x, y, radius, show_level=1):
 
 
 def clip_to_ROI(GT_seg, est_seg):
+    """
+    Zero out any layer of GT where est has no values
+    :param GT_seg: nparray
+    :param est_seg: nparray
+    :return: GT and est after clipping
+    """
     # Find the indices of the slices with data in est_seg
     slice_indices = np.where(np.any(est_seg, axis=(0, 1)))[0]
     first_slice = slice_indices[0]

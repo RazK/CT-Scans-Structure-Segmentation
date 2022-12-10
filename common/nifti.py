@@ -43,6 +43,12 @@ def load_nifti_file(nifti_path: str):
 
 
 def load_nifti_data(nifti_path: str, return_file=False):
+    """
+    Load 3d nparray from disk (NIFTI file)
+    :param nifti_path: str
+    :param return_file: flag - True to also return the file descriptor
+    :return: img_data | (img_data, nifti_file) - depends on flag
+    """
     nifti_file = load_nifti_file(nifti_path)
     logging.info(f"getting the data...")
     img_data = nifti_file.get_fdata()
@@ -52,16 +58,27 @@ def load_nifti_data(nifti_path: str, return_file=False):
 
 
 def save_aorta_segmentation(segmentation_mask, input_ct_path, original_ct_nifti):
+    """
+    Save segmentation of the Aorta to disk.
+    :param segmentation_mask: nparray
+    :param input_ct_path: str
+    :param original_ct_nifti: file descriptor
+    :return: None. saves to disk.
+    """
     output_path = build_aorta_segmentation_out_path(input_ct_path)
     save_segmentation_nifti(segmentation_mask, output_path, original_ct_nifti)
 
 
 def save_bones_segmentation(input_nifti_file, input_nifti_path, segmentation_mask, i_min, i_max, post_processed=False):
     """
-    Save the segmentation mask to a nifti file at output_path.
-    :param segmentation_mask: np.array with 1s where True, 0s where False.
-    :param input_nifti_file: the original nifti file for which this segmentation belongs
-    :param output_path: path to write segmentation nifti file.
+    Save segmentation of the bones to disk.
+    :param input_nifti_file: file descriptor
+    :param input_nifti_path: str
+    :param segmentation_mask: nparray
+    :param i_min: int
+    :param i_max: int
+    :param post_processed: flag
+    :return: None. saves to disk.
     """
     output_path = build_bones_segmentation_out_path(input_nifti_path=input_nifti_path,
                                                     i_min=i_min,
@@ -99,6 +116,13 @@ def build_aorta_segmentation_out_path(input_ct_path):
 
 
 def save_segmentation_nifti(segmentation, out_path, origianl_nifti_file):
+    """
+    Save the segmentation to disk.
+    :param segmentation: nparray
+    :param out_path: where to save
+    :param origianl_nifti_file: file descriptor
+    :return: None. saves to disk
+    """
     new_nifti = nib.Nifti1Image(segmentation, origianl_nifti_file.affine)
     nib.save(new_nifti, out_path)
     logging.info(f"writing a segmentation mask to '{out_path}'")

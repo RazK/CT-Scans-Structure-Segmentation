@@ -18,6 +18,14 @@ BONES_HU_MIN_RANGE = range(BONES_HU_MIN_RANGE_START,
 
 
 def SegmentationByTH(nifti_path, Imin, Imax):
+    """
+    Segment the given CT image based on thresholds.
+    Save the results.
+    :param nifti_path: str
+    :param Imin: int
+    :param Imax: int
+    :return: None. saves the results to disk.
+    """
     logging.info(f"SegmentationByTH({nifti_path},{Imin},{Imax})...")
     nifti_data, nifti_file = load_nifti_data(nifti_path, return_file=True)
     bones_segmentation = segment_by_threshold(nifti_data, Imin, Imax)
@@ -29,6 +37,12 @@ def SegmentationByTH(nifti_path, Imin, Imax):
 
 
 def SkeletonTHFinder(nifti_path, connectivity=1):
+    """
+    Find the best Imin threshold to get the minimum number of connected components in the scan.
+    :param nifti_path: str
+    :param connectivity: int
+    :return: None. Plots graphs and saves the results to disk.
+    """
     nifti_data, nifti_file = load_nifti_data(nifti_path,
                                              return_file=True)
     thresholds_plotter = ThresholdsPlotter()
@@ -50,6 +64,6 @@ def SkeletonTHFinder(nifti_path, connectivity=1):
 
 if __name__ == "__main__":
     logging.info("bones_segmentation.py running...")
-    for i in range(1,5+1):
+    for i in range(1, 5 + 1):
         SegmentationByTH(input_ct_path(i), 240, 1300)
         SkeletonTHFinder(input_ct_path(i))

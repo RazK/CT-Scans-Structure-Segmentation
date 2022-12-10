@@ -9,6 +9,9 @@ from common.nifti import get_filename_no_suffix
 
 
 class ThresholdsPlotter:
+    """
+    Small class to plot the threshold finding process.
+    """
     def __init__(self):
         self.i_min_list = list()
         self.num_components_list = list()
@@ -37,42 +40,14 @@ class ThresholdsPlotter:
         self.last_figure = plt.gcf()
         plt.show()
 
-
-def plot_3d(slices):
-    smaller_slices = [resize(slice, (100, 100)) for slice in slices]
-
-    # Get the shape of the image
-    height, width = smaller_slices[0].shape
-
-    # Create two 2D arrays containing the x-coordinates and y-coordinates of each cell
-    X, Y = np.meshgrid(np.arange(width), np.arange(height))
-
-    # create the figure
-    fig = plt.figure()
-
-    # show the 3D rotated projection
-    ax = fig.add_subplot(111, projection='3d')
-
-    for i, slice in enumerate(smaller_slices):
-        Z = np.zeros_like(slice) + 10 * i
-        ax.plot_surface(X, Y, Z, rstride=1, cstride=1, facecolors=plt.cm.gray_r(slice / slice.max()), shade=False)
-
-
 SHOW_LEVEL = 0
 
-
 def show(img, level=1):
+    """
+    Plot the given image nicely
+    :param img: image to plot
+    :param level: cheat to make it silent
+    """
     if (level >= SHOW_LEVEL):
         plt.imshow(img, cmap="gray_r")
         plt.show()
-
-
-def show_equalize(slice):
-    slice_equalized = exposure.equalize_hist(slice)
-    plt.subplot(1, 2, 1)
-    plt.imshow(slice, cmap="gray_r")
-    plt.title('Original')
-    plt.subplot(1, 2, 2)
-    plt.imshow(slice_equalized, cmap="gray_r")
-    plt.title('Equalized')
-    plt.show()

@@ -5,7 +5,6 @@ import numpy as np
 
 from common.nifti import save_aorta_segmentation, load_nifti_data, input_ct_path, input_l1_path, input_aorta_path, \
     build_aorta_segmentation_out_path
-from common.plotting import show
 from common.segmentation import get_first_and_last_nonzero_layers, get_key_layer_and_aorta_point_from_ct_and_l1, \
     create_aorta_mask_return_center, clip_to_ROI
 
@@ -13,6 +12,13 @@ logging.basicConfig(format="[%(module)s:%(funcName)s] %(message)s", stream=sys.s
 
 
 def AortaSegmentation(ct_nifti_path, l1_seg_nifti_path):
+    """
+    Perform a segmentation of the aorta based on the given L1 segmentation.
+    Make some plots along the way and save the result.
+    :param ct_nifti_path: str
+    :param l1_seg_nifti_path: str
+    :return: aorta_segmentation (after saving it)
+    """
     ct, ct_file = load_nifti_data(ct_nifti_path, return_file=True)
     l1, l1_file = load_nifti_data(l1_seg_nifti_path, return_file=True)
     aorta_segmentation = np.zeros_like(ct)
@@ -40,41 +46,13 @@ def AortaSegmentation(ct_nifti_path, l1_seg_nifti_path):
     return aorta_segmentation
 
 
-# def evaluate_segmentation(clipped_gt_seg, clipped_est_seg):
-#     """Calculate the DICE and VOD scores of two 3D numpy arrays.
-#
-#     Args:
-#         clipped_gt_seg: A 3D numpy array containing the ground truth segmentation.
-#         clipped_est_seg: A 3D numpy array containing the estimated segmentation.
-#
-#     Returns:
-#         A tuple with the DICE score and the VOD score.
-#     """
-#
-#     # Calculate the DICE score
-#     intersection = np.sum(clipped_gt_seg * clipped_est_seg)
-#     GT_count = np.sum(clipped_gt_seg)
-#     est_count = np.sum(clipped_est_seg)
-#     dice = 2 * intersection / (GT_count + est_count)
-#
-#     # Calculate the VOD score
-#     GT_unique, GT_counts = np.unique(clipped_gt_seg, return_counts=True)
-#     vod = 0
-#     for val, count in zip(GT_unique, GT_counts):
-#         # Ignore background pixels (assumed to have value 0)
-#         if val == 0:
-#             continue
-#         GT_seg_val = (clipped_gt_seg == val)
-#         est_seg_val = (clipped_est_seg == val)
-#         intersection = np.sum(GT_seg_val * est_seg_val)
-#         vod += intersection / count
-#
-#     logging.info("DICE score: %.4f", dice)
-#     logging.info("VOD score: %.4f", vod)
-#     return dice, vod
-#
-
 def evaluate_segmentation(gt_seg, est_seg):
+    """
+    Return VOD, DICE scores for the given ground-truth (GT) and estimation.
+    :param gt_seg: nparray
+    :param est_seg: nparray
+    :return: (vod, dice)
+    """
     gt_seg, est_seg = clip_to_ROI(gt_seg, est_seg)
     size_GT = np.count_nonzero(gt_seg)
     size_EST = np.count_nonzero(est_seg)
@@ -85,28 +63,11 @@ def evaluate_segmentation(gt_seg, est_seg):
     return vod, dice
 
 
-# def clip_gt_est_seg(gt_seg, est_seg):
-#
-#     # Convert the arrays to int type and ensure they have the same shape
-#     GT_seg = GT_seg.astype(int)
-#     est_seg = est_seg.astype(int)
-#     print(f"GT_seg shape={GT_seg.shape}")
-#     print(f"est_seg shape={est_seg.shape}")
-#     assert GT_seg.shape == est_seg.shape, "Arrays must have the same shape"
-#
-#     # Clip GT_seg to the same ROI as est_seg
-#     show(GT_seg[:, :, 270])
-#     show(est_seg[:, :, 270])
-#     GT_seg, est_seg = clip_to_ROI(GT_seg, est_seg)
-#     show(GT_seg[:, :, 270])
-#     show(est_seg[:, :, 270])
-#
-
 if __name__ == "__main__":
     logging.info("aorta_segmentation.py running...")
     for i in range(1, 4 + 1):
         # Perform Aorta segmentation
-        # aorta_segmentation = AortaSegmentation(input_ct_path(i), input_l1_path(i))
+        aorta_segmentation = AortaSegmentation(input_ct_path(i), input_l1_path(i))
 
         # Evaluate the segmentation with the ground truth (GT)
         GT_path = input_aorta_path(i)

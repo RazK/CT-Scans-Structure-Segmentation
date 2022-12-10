@@ -2,3 +2,4 @@ nibabel~=4.0.2
 matplotlib~=3.6.2
 numpy~=1.23.5
 scikit-image~=0.19.3
+scipy
